@@ -47,7 +47,11 @@ def test_user_flow(admin_client: 'APIClient', anon_client: 'APIClient'):
         for i in range(users_count)
     ]
 
-    """ Создаем пользователей"""
+    """
+     
+     Создаем пользователей
+     
+    """
     for user in users_data:
         response = admin_client.post(
             '/api/v1/users/',
@@ -56,19 +60,31 @@ def test_user_flow(admin_client: 'APIClient', anon_client: 'APIClient'):
         user['id'] = response.data.get('id')
         assert response.status_code == 201
 
-    """ Проверяем количество созданных пользователей """
+    """
+    
+     Проверяем количество созданных пользователей
+    
+    """
     response = admin_client.get('/api/v1/users/')
     assert response.data.get('count') == users_count
     assert response.status_code == 200
 
-    """ Проверяем возможность авторизации для каждого пользователя """
+    """ 
+    
+    Проверяем возможность авторизации для каждого пользователя 
+    
+    """
     for user in users_data:
         response = anon_client.post(
             '/api/auth/login/', data={**user}
         )
         assert response.status_code == 200, response.content
 
-    """ Удаляем созданных пользователей """
+    """
+     
+     Удаляем созданных пользователей
+      
+    """
     for user in users_data:
         response = admin_client.delete(f'/api/v1/users/{user["id"]}/')
         assert response.status_code == 204
