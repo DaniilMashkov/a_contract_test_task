@@ -1,4 +1,3 @@
-import json
 from typing import TYPE_CHECKING
 
 import pytest
@@ -38,21 +37,6 @@ def test_auth_using_login_pass(anon_client: 'APIClient', user_with_password: 'Us
 
 @pytest.mark.django_db
 def test_user_flow(admin_client: 'APIClient', anon_client: 'APIClient'):
-    """
-    TODO Дополните тест.
-     Требуется подготовить данные для создания нескольких рандомных пользователей используя клиент для admin
-     (не забудьте вначале починить фикстуру admin) и выполнить следующие действия:
-     1. Создать пользователя отправив POST-запрос на url '/api/v1/users/'
-        response.status_code == 200
-     2. Проверить количество созданных пользователей отправив GET-запрос на url '/api/v1/users/'
-        response.status_code == 200
-     3. Проверить авторизацию для каждого нового пользователя. Необходимо используя анонимный клиент
-        отправить POST-запрос на url f'/api/v1/users/{created_users_id}/' response.status_code == 200
-     4. Удалить всех созданных пользователей, отправив DELETE-запрос на url f'/api/v1/users/{created_users_id}/',
-        response.status_code == 204
-
-    Пример создания данных для рандомных пользователей.
-
     users_count = 20
     users_data = [
         {
@@ -63,6 +47,28 @@ def test_user_flow(admin_client: 'APIClient', anon_client: 'APIClient'):
         for i in range(users_count)
     ]
 
-    """
+    """ Создаем пользователей"""
+    for user in users_data:
+        response = admin_client.post(
+            '/api/v1/users/',
+            data=user
+        )
+        user['id'] = response.data.get('id')
+        assert response.status_code == 201
 
-    ...
+    """ Проверяем количество созданных пользователей """
+    response = admin_client.get('/api/v1/users/')
+    assert response.data.get('count') == users_count
+    assert response.status_code == 200
+
+    """ Проверяем возможность авторизации для каждого пользователя """
+    for user in users_data:
+        response = anon_client.post(
+            '/api/auth/login/', data={**user}
+        )
+        assert response.status_code == 200, response.content
+
+    """ Удаляем созданных пользователей """
+    for user in users_data:
+        response = admin_client.delete(f'/api/v1/users/{user["id"]}/')
+        assert response.status_code == 204
